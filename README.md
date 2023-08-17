@@ -1,0 +1,2 @@
+Tiva C series tm4c123gh6pm
+As can be seen from the code I wrote, I used pins 1, 2 and 3 of port E for South traffic lights, I used pins 2, 3 and 4 of port A for West traffic lights, and pins 2, 3 of B port for Pedestrian lights. I also used the pin 1 of the D port for the South button ,2nd pin for the West button and the 3rd pin for the Pedestrian button. As seen in the photo below, the button controlling each traffic light stands opposite the light. In this way, it is easier to follow the circuit and I get an intersection view.
