@@ -1,0 +1,226 @@
+#include <stdint.h>
+#include <stdlib.h>
+#define SYSCTL_RCGC2_R (*((volatile unsigned long *)0x400FE108))
+#define GPIO_PORTE_AMSEL_R (*((volatile unsigned long *)0x40024528))
+#define GPIO_PORTE_PCTL_R (*((volatile unsigned long *)0x4002452C))
+#define GPIO_PORTE_DIR_R (*((volatile unsigned long *)0x40024400))
+#define GPIO_PORTE_AFSEL_R (*((volatile unsigned long *)0x40024420))
+#define GPIO_PORTE_DEN_R (*((volatile unsigned long *)0x4002451C))
+#define GPIO_PORTD_LOCK_R (*((volatile unsigned long *)0x40007520))
+#define GPIO_PORTD_CR_R (*((volatile unsigned long *)0x40007524))
+#define GPIO_PORTD_AMSEL_R (*((volatile unsigned long *)0x40007528))
+#define GPIO_PORTD_PCTL_R (*((volatile unsigned long *)0x4000752C))
+#define GPIO_PORTD_DIR_R (*((volatile unsigned long *)0x40007400))
+#define GPIO_PORTD_PUR_R (*((volatile unsigned long *)0x40007510))
+#define GPIO_PORTD_AFSEL_R (*((volatile unsigned long *)0x40007420))
+#define GPIO_PORTD_DEN_R (*((volatile unsigned long *)0x4000751C))
+#define GPIO_PORTB_AMSEL_R (*((volatile unsigned long *)0x40005528))
+#define GPIO_PORTB_PCTL_R (*((volatile unsigned long *)0x4000552C))
+#define GPIO_PORTB_DIR_R (*((volatile unsigned long *)0x40005400))
+#define GPIO_PORTB_AFSEL_R (*((volatile unsigned long *)0x40005420))
+#define GPIO_PORTB_DEN_R (*((volatile unsigned long *)0x4000551C))
+#define GPIO_PORTA_AMSEL_R (*((volatile unsigned long *)0x40004528))
+#define GPIO_PORTA_PCTL_R (*((volatile unsigned long *)0x4000452C))
+#define GPIO_PORTA_DIR_R (*((volatile unsigned long *)0x40004400))
+#define GPIO_PORTA_PUR_R (*((volatile unsigned long *)0x40004510))
+#define GPIO_PORTA_AFSEL_R (*((volatile unsigned long *)0x40004420))
+#define GPIO_PORTA_DEN_R (*((volatile unsigned long *)0x4000451C))
+//I define the button and traffic lights on the West side
+#define PA234 (*((volatile unsigned long *)0x40004070))
+#define swW (*((volatile unsigned long *)0x40007010))
+//I define the button and traffic lights on the South side
+#define PE123 (*((volatile unsigned long *)0x40024038))
+#define swS (*((volatile unsigned long *)0x40007008))
+//I define the button and traffic lights on the Pedestrian side
+#define PB23 (*((volatile unsigned long *)0x40005030))
+#define swP (*((volatile unsigned long *)0x40007020))
+int i;
+void delay(int sec);
+void delay1(int sec);
+int main (void){
+//Port A,B,D,E Clock activation
+SYSCTL_RCGC2_R |=(1<<0)|(1<<1)|(1<<3)|(1<<4);
+GPIO_PORTE_AMSEL_R = 0x00; //Disabling analog on PE.
+GPIO_PORTE_PCTL_R = 0x00; //PCTL GPIO on PE port.
+GPIO_PORTE_DIR_R = 0x1F; //All pins are outputs.
+GPIO_PORTE_AFSEL_R = 0x00; //Disable Analog Function
+GPIO_PORTE_DEN_R = 0x1F; //Enable digital IO on E port.
+GPIO_PORTD_LOCK_R = 0x4C4F434B; //Opening the locked pins on the D port.
+GPIO_PORTD_CR_R = 0x1F;
+GPIO_PORTD_AMSEL_R = 0x00; //Disabling analog on PD.
+GPIO_PORTD_PCTL_R = 0x00; //PCTL GPIO on PD port.
+GPIO_PORTD_DIR_R = 0x00; //Using this port for the switches
+GPIO_PORTD_PUR_R = 0x00; //External pull-down resistor
+GPIO_PORTD_AFSEL_R = 0x00; //Disabling Analog Function
+GPIO_PORTD_DEN_R = 0x1F; //Enabling digital IO on D port.
+GPIO_PORTB_AMSEL_R =0x00; //Disabling analog on PB.
+GPIO_PORTB_PCTL_R =0x00; //PCTL GPIO on PB port.
+GPIO_PORTB_DIR_R =0x0C; //PIN 2 and 3 are output
+GPIO_PORTB_AFSEL_R =0x00; //Disabling Analog Function
+GPIO_PORTB_DEN_R = 0x1F; //Enabling digital IO on B port.
+GPIO_PORTA_AMSEL_R = 0x00; //Disabling analog on PA.
+GPIO_PORTA_PCTL_R = 0x00; //PCTL GPIO on PA port.
+GPIO_PORTA_DIR_R = 0x1C; //Outputs for West side lights
+GPIO_PORTA_AFSEL_R = 0x00; //Disabling Analog Function
+GPIO_PORTA_DEN_R = 0x1F; //Enabling digital IO on D port.
+i = 0;
+while(1){
+//The part where the buttons are pressed
+//if traffic gets heavy in the South
+if(swS==0x02){
+i=5;
+}
+//if traffic gets heavy in the West
+if(swW == 0x04){
+i=6;
+}
+//if pedestrians will cross.
+if(swP == 0x08){
+i=7;
+}
+//***The normal flow loop of the traffic light.***//
+//S RED W GREEN
+if(i==0){
+PB23=0x04;
+PE123 = 0x02;
+PA234 = 0x04;
+delay(5);
+i=1;
+}
+//BOTH YELLOW
+else if(i==1){
+PB23=0x04;
+PE123 = 0x04;
+PA234 = 0x08;
+delay(3);
+i=2;
+}
+//S GREEN W RED
+else if(i==2){
+PB23=0x04;
+PE123 = 0x08;
+PA234 = 0x10;
+delay(5);
+i=3;
+}
+//BOTH YELLOW If the South or Pedest buttons were pressed it will come here on the return of the loop.
+else if(i==3){
+PB23=0x04;
+PE123 = 0x04;
+PA234 = 0x08;
+delay(3);
+i=0;
+}
+//BOTH YELLOW If the West button was pressed it will come here on the return of the loop.
+else if(i==4){
+PB23=0x04;
+PE123 = 0x04;
+PA234 = 0x08;
+delay(3);
+i=2;
+}
+//***The part that makes the lamps green when the buttons are pressed***//
+//The loop required for the South lamp to be green.
+else if(i==5){
+PB23=0x04;
+PE123 = 0x04;
+PA234 = 0x08;
+delay(1);
+//The lamp will continue to glow green if the South button is held down.
+while(swS == 0x02){
+PE123 = 0x08;
+PA234 = 0x10;
+}
+PA234 = 0x10;
+PE123 = 0x08;
+delay(4);
+//A small animation to show that the lamp turns green with the button.
+PA234 = 0x10;
+PE123 = 0x00;
+delay1(500);
+PA234 = 0x10;
+PE123 = 0x08;
+delay1(500);
+PA234 = 0x10;
+PE123 = 0x00;
+delay1(500);
+PA234 = 0x10;
+PE123 = 0x08;
+delay1(500);
+PA234 = 0x10;
+PE123 = 0x00;
+delay1(500);
+i=3;
+}
+//The loop required for the West lamps to be green.
+else if(i==6){
+PB23=0x04;
+PE123 = 0x04;
+PA234 = 0x08;
+delay(1);
+//The lamp will continue to glow green if the West button is held down.
+while(swW == 0x04){
+PA234 = 0x02;
+PE123 = 0x02;
+}
+PA234 = 0x04;
+PE123 = 0x02;
+delay(3);
+//A small animation to show that the lamp turns green with the button.
+PA234 = 0x00;
+PE123 = 0x02;
+delay1(500);
+PA234 = 0x04;
+PE123 = 0x02;
+delay1(500);
+PA234 = 0x00;
+PE123 = 0x02;
+delay1(500);
+PA234 = 0x04;
+PE123 = 0x02;
+delay1(500);
+PA234 = 0x00;
+PE123 = 0x02;
+delay1(500);
+i=4;
+}
+//The loop required for the Pedestrian lamps to be green.
+else if(i==7){
+PE123 = 0x04;
+PA234 = 0x08;
+delay(1);
+//The lamp will continue to glow green if the Pedest button is pressing
+while(swP == 0x08){
+PE123 = 0x02;
+PA234 = 0x10;
+PB23=0x08;
+}
+PB23=0x08;
+delay(3);
+PB23=0x08;
+delay1(500);
+PB23=0x00;
+delay1(500);
+PB23=0x08;
+delay1(500);
+PB23=0x00;
+delay1(500);
+PB23=0x08;
+delay1(500);
+PB23=0x04;
+delay1(500);
+i=3;
+}
+}
+return 1;
+}
+void delay(int sec){
+int c = 1, d = 1;
+for (c =1;c<=sec; c++)
+for(d=1 ; d<=4000000 ; d++){}
+}
+void delay1(int sec){
+int c = 1, d = 1;
+for (c =1;c<=sec; c++)
+for(d=1 ; d<=4000 ; d++){}
+}
