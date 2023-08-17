@@ -6,7 +6,12 @@ The pins I use in the project are as follows:
 As can be seen from the code I wrote, I used pins 1, 2 and 3 of port E for South traffic lights, I used pins 2, 3 and 4 of port A for West traffic lights, and pins 2, 3 of B port for Pedestrian lights. I also used the pin 1 of the D port for the South button ,2nd pin for the West button and the 3rd pin for the Pedestrian button. As seen in the photo below, the button controlling each traffic light stands opposite the light. In this way, it is easier to follow the circuit and I get an intersection view.
 
 ![traffic_lights](https://github.com/gokhanggok/traffic_lights_tivaCseries/assets/127993044/0e7a91b4-50aa-4503-b403-6abc1a337f05)
+
+### Logic Table
 ![image](https://github.com/gokhanggok/traffic_lights_tivaCseries/assets/127993044/5e5acfc3-9496-458c-8adc-bd16a7e4f0e4)
+
+### Finite State Machine Table
+![image](https://github.com/gokhanggok/traffic_lights_tivaCseries/assets/127993044/494430c3-8fc0-4c70-b7bb-7e51a939fad3)
 
 
 
